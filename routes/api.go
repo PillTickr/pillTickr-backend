@@ -12,6 +12,9 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		api.POST("/auth/signup", controllers.Signup)
 		api.POST("/auth/login", controllers.Login)
+		api.POST("/auth/refresh", controllers.Refresh)
+		// api.POST("/auth/logout", controllers.Logout)
+		api.GET("/auth/verify", controllers.Verify)
 
 		auth := api.Group("/")
 		auth.Use(middleware.RequireAuth())

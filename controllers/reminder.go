@@ -89,7 +89,11 @@ func CreateReminder(c *gin.Context) {
 
 	// Automatically set user_id from JWT
 	reminder.UserID = userID
-	reminder.ID = uuid.New().String() // Generate new UUID for reminder
+	// if reminder.id is not set, generate a new UUID
+	if reminder.ID == "" {
+		reminder.ID = uuid.New().String()
+	}
+	// reminder.ID = uuid.New().String() // Generate new UUID for reminder
 
 	// Insert the reminder into the database
 	var insertedID uuid.UUID

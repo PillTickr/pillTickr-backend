@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"pillTickr-backend/db"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type SignupInput struct {
@@ -268,4 +271,91 @@ func Login(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/json", respBody)
+}
+
+func Verify(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+		return
+	}
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	secret := os.Getenv("SUPABASE_JWT_SECRET")
+	if secret == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT secret not configured"})
+		return
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"valid": true, "claims": claims})
+}
+
+// Refresh handles refreshing a user's access token
+func Refresh(c *gin.Context) {
+	var body struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	fmt.Println("Refresh token:", body.RefreshToken)
+
+	if err := c.ShouldBindJSON(&body); err != nil || body.RefreshToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing or invalid refresh token"})
+		return
+	}
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	apiKey := os.Getenv("SUPABASE_ANON_KEY")
+
+	refreshPayload := map[string]string{
+		"refresh_token": body.RefreshToken,
+	}
+	payloadBytes, _ := json.Marshal(refreshPayload)
+
+	req, err := http.NewRequest("POST", supabaseURL+"/auth/v1/token?grant_type=refresh_token", strings.NewReader(string(payloadBytes)))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request" + string(err.Error())})
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("apikey", apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send request"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.JSON(resp.StatusCode, gin.H{"error": "Failed to refresh token"})
+		return
+	}
+
+	var tokenResp map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse refresh response"})
+		return
+	}
+
+	c.JSON(http.StatusOK, tokenResp)
 }
