@@ -1,3 +1,5 @@
+Open for HacktoberFest'25
+
 ``` sh
 pilltickr-backend/
 ├── main.go
