@@ -34,7 +34,7 @@ func GetReminders(c *gin.Context) {
 
 	// Query reminders for the authenticated user
 	rows, err := db.DB.Query(context.Background(),
-		"SELECT id, user_id, name, notes, is_recurring, recurrence_pattern, start_date, end_date, is_active, created_at FROM pilltickr.reminders WHERE user_id = $1",
+		"SELECT * FROM pilltickr.reminders WHERE user_id = $1",
 		userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -45,11 +45,34 @@ func GetReminders(c *gin.Context) {
 	var reminders []models.Reminder
 	for rows.Next() {
 		var r models.Reminder
+		// Scan reminder fields
 		err := rows.Scan(&r.ID, &r.UserID, &r.Name, &r.Notes, &r.IsRecurring, &r.RecurrencePattern, &r.StartDate, &r.EndDate, &r.IsActive, &r.CreatedAt)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		// Fetch doses for this reminder
+		doseRows, err := db.DB.Query(context.Background(),
+			"SELECT * FROM pilltickr.doses WHERE reminder_id = $1",
+			r.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var doses []models.ReminderDose
+		for doseRows.Next() {
+			var d models.ReminderDose
+			if err := doseRows.Scan(&d.ID, &d.ReminderID, &d.Time, &d.Dosage, &d.Notes, &d.CreatedAt); err != nil {
+				doseRows.Close()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			doses = append(doses, d)
+		}
+		doseRows.Close()
+		r.Doses = doses
 		reminders = append(reminders, r)
 	}
 
