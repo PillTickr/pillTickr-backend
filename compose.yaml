@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  pilltickr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pilltickr-app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: unless-stopped
+
