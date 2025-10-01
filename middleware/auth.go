@@ -20,8 +20,11 @@ func RequireAuth() gin.HandlerFunc {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		// Replace this with your actual JWT secret from Supabase project settings
-		var jwtSecret = []byte(os.Getenv("SUPABASE_JWT_SECRET"))
+		jwtSecret := []byte(os.Getenv("JWT_SECRET")) // ✅ use the same secret as in Signup/Login
+		if jwtSecret == nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "JWT_SECRET not set"})
+			return
+		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -35,8 +38,14 @@ func RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user", token.Claims) // You can customize to set only sub/email etc.
+		// Store claims for later use
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			c.Set("user", claims)
+		} else {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims"})
+			return
+		}
+
 		c.Next()
 	}
-
 }
