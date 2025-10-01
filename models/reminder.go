@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Reminder struct {
-	// ID                string     `json:"id"`
+	ID                string         `json:"id"`
 	UserID            string         `json:"user_id"`
 	Name              string         `json:"name"`
 	Notes             *string        `json:"notes,omitempty"`
@@ -17,7 +17,7 @@ type Reminder struct {
 }
 
 type ReminderDose struct {
-	// ID         string    `json:"id"`
+	ID         string    `json:"id"`
 	ReminderID string    `json:"reminder_id"`
 	Time       string    `json:"time"` // store in "15:04" format
 	Dosage     string    `json:"dosage"`

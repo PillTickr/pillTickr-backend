@@ -18,7 +18,7 @@ func Init() {
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
-	log.Println("dbrul", dbURL)
+	// log.Println("dbrul", dbURL)
 	pool, err := pgxpool.New(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
