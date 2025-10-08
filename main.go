@@ -57,12 +57,14 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	server := gin.New()
+	server := gin.Default()
 
 	// Add middleware in order
 	server.Use(middleware.ErrorHandler())    // Panic recovery
 	server.Use(middleware.SecurityHeaders()) // Security headers
 	// server.Use(middleware.RateLimiter())       // Rate limiting
+
+	// this provides logging HTTP Requests
 	server.Use(middleware.RequestLogger())          // Request logging
 	server.Use(middleware.ValidationErrorHandler()) // Validation error handling
 
@@ -105,6 +107,11 @@ func main() {
 			return
 		}
 		c.JSON(200, gin.H{"status": "healthy"})
+	})
+
+	// A nice get started message
+	server.GET("/", func(c *gin.Context) {
+		c.String(200, "Welcome to the PillTickr API! Visit /api/docs for API documentation.")
 	})
 
 	// Graceful shutdown setup
