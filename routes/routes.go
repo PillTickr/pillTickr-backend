@@ -22,10 +22,10 @@ func NewRoutes() Routes {
 	return Routes{
 		// --- Auth ---
 		{
-			Name:        "Signup",
+			Name:        "Register",
 			Method:      "POST",
-			Pattern:     "/auth/signup",
-			HandlerFunc: handlers.Signup,
+			Pattern:     "/auth/register",
+			HandlerFunc: handlers.Register,
 			Secured:     false,
 		},
 		{
@@ -35,7 +35,13 @@ func NewRoutes() Routes {
 			HandlerFunc: handlers.Login,
 			Secured:     false,
 		},
-
+		{
+			Name:        "RefreshToken",
+			Method:      "POST",
+			Pattern:     "/auth/refresh",
+			HandlerFunc: handlers.RefreshToken,
+			Secured:     false,
+		},
 		// --- Reminders (secured) ---
 		{
 			Name:        "GetReminders",
