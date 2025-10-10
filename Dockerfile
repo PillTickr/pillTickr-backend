@@ -25,7 +25,7 @@ WORKDIR /app
 
 # Copy binary and .env
 COPY --from=builder /app/pilltickr .
-COPY .env .
+COPY stack.env ./.env
 
 EXPOSE 8080
 
