@@ -128,9 +128,17 @@ func main() {
 		cancel()
 	}()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8090" // fallback default
+	var port string
+
+	// if dev environment, get port from .env else use 8090
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "development" || environment == "dev" {
+		port = os.Getenv("PORT")
+		if port == "" {
+			port = "8090"
+		}
+	} else {
+		port = "8080"
 	}
 
 	// Start server in a goroutine

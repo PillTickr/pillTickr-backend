@@ -5,9 +5,11 @@ MIGRATIONS        := sql/init.sql
 MIGRATIONS_DOWN   := sql/dropData.sql
 
 BINARY_NAME       := main
-IMAGE_NAME        := pillTickr-backend
-CONTAINER_PORT    := 8080
-HOST_PORT         := 8080
+IMAGE_NAME        := pilltickr-backend
+# app runs on 8090 inside the container
+CONTAINER_PORT    := 8090
+# this port is for user
+HOST_PORT         := 8081
 
 # --- Targets ---
 .PHONY: all migrationup migrationdown clean dev build docker run docker-clean push help
@@ -35,7 +37,6 @@ clean: ## Remove the SQLite db file
 	else \
 		echo "Failed to remove database files"; \
 	fi
-
 
 ## Start the development server with Air for live reloading
 dev: ## Start the development server with Air for live reloading
